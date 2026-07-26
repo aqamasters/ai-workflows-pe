@@ -1,0 +1,25 @@
+#!/usr/bin/env sh
+set -eu
+
+ROOT=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+PYTHON=${PYTHON:-}
+
+if [ -z "$PYTHON" ]; then
+  for candidate in python3.14 python3.13 python3.12 python3; do
+    if command -v "$candidate" >/dev/null 2>&1; then
+      PYTHON=$(command -v "$candidate")
+      break
+    fi
+  done
+fi
+
+if [ -z "$PYTHON" ]; then
+  printf '%s\n' "AQA AI Workflows Public Edition needs Python 3.12–3.14." >&2
+  printf '%s\n' "Install Python from https://www.python.org/downloads/ and run this file again." >&2
+  exit 1
+fi
+
+"$PYTHON" "$ROOT/scripts/bootstrap.py" "$ROOT"
+VENV_PYTHON=$("$PYTHON" "$ROOT/scripts/bootstrap.py" "$ROOT" --print-python)
+export PYTHONPATH="$ROOT/src${PYTHONPATH:+:$PYTHONPATH}"
+exec "$VENV_PYTHON" -m aqa_ai_workflows_pe.cli serve "$@"

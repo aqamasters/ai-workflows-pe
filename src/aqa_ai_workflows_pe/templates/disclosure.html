@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}Review what will be sent · AQA AI Workflows Public Edition{% endblock %}
+{% block shell_class %}assessment-shell{% endblock %}
+{% block content %}
+<section class="hero-and-summary hero-and-summary--approval" aria-labelledby="approval-hero-title">
+  <div class="hero-and-summary__inner">
+    <div class="hero-and-summary__big-title" aria-hidden="true"><span>Approval gate.</span></div>
+    <div class="hero-and-summary__content">
+      <a class="hero-and-summary__scroll" href="#context-scope" aria-label="Scroll to the approved context scope"><span aria-hidden="true">↓</span></a>
+      <div class="hero-and-summary__title-wrap">
+        <div class="hero-and-summary__copy">
+          <div class="hero-and-summary__meta"><span>Local approval required</span><span>Ready to inspect</span></div>
+          <h1 id="approval-hero-title">{% if review_state %}Review the additional context the model requested.{% else %}Review the context before it leaves this machine.{% endif %}</h1>
+          <p class="hero-and-summary__intro">{% if review_state %}The earlier approved pack was sent. The app retrieved {{ new_evidence }} additional evidence units locally; this revised pack will not be sent unless you approve it.{% else %}Nothing below has been sent to the selected AI provider. Confirm only after the destination and evidence scope look right.{% endif %}</p>
+        </div>
+        <div class="hero-and-summary__actions" aria-label="Approval gate actions">
+          <a class="hero-action hero-action--dark" href="#context-scope"><span aria-hidden="true">→</span> Inspect context</a>
+          <a class="hero-action hero-action--light" href="/"><span aria-hidden="true">←</span> Change setup</a>
+        </div>
+      </div>
+    </div>
+    <div class="hero-and-summary__summary">
+      <div class="hero-and-summary__summary-heading">
+        <p class="hero-and-summary__summary-label">Context pack at a glance</p>
+        <p class="hero-and-summary__summary-note">Only this bounded pack can be sent after explicit approval.</p>
+      </div>
+      <dl aria-label="Context pack summary">
+        <div><dt>Destination</dt><dd data-approval-destination>{{ assessment.request.provider.provider.value }} · {{ assessment.request.provider.model }}</dd></div>
+        <div><dt>Repositories</dt><dd>{{ pack.repositories|length }} pinned source{% if pack.repositories|length != 1 %}s{% endif %}</dd></div>
+        <div><dt>Evidence</dt><dd>{{ pack.evidence|length }} unit{% if pack.evidence|length != 1 %}s{% endif %} · {{ "%.1f"|format(content_bytes / 1024) }} KB</dd></div>
+        <div><dt>Input estimate</dt><dd>~{{ "{:,}".format(pack.estimated_tokens) }} tokens</dd></div>
+      </dl>
+    </div>
+  </div>
+</section>
+
+<div class="assessment-content" id="context-scope">
+
+<section class="card">
+  <div class="section-heading"><div><p class="mono-label">REPOSITORY SCOPE</p><h2>Exact commits</h2></div></div>
+  <div class="pin-list">
+  {% for pin in pack.repositories %}
+    <div><span>{{ pin.alias }}</span><strong>{{ pin.slug }}</strong><code>{{ pin.commit_sha[:12] }}</code><small>{{ pin.relationship }}</small></div>
+  {% endfor %}
+  </div>
+</section>
+
+<details class="card evidence-preview">
+  <summary><span><strong>Inspect selected evidence</strong><small>{{ pack.evidence|length }} evidence units · {{ redactions }} high-confidence secret redactions</small></span><span>+</span></summary>
+  <div class="table-wrap">
+    <table><thead><tr><th>ID</th><th>Repository</th><th>Path</th><th>Why selected</th><th>Size</th></tr></thead>
+    <tbody>{% for item in pack.evidence %}<tr><td><code>{{ item.id }}</code></td><td>{{ item.repository_alias }}</td><td><code>{{ item.path }}</code></td><td>{{ item.reason }}</td><td>{{ item.content|length }} chars</td></tr>{% endfor %}</tbody></table>
+  </div>
+</details>
+
+{% if pack.exclusions %}<section class="card muted-card"><h2>Known exclusions and limits</h2><ul>{% for item in pack.exclusions %}<li>{{ item }}</li>{% endfor %}</ul></section>{% endif %}
+
+<form class="confirm-bar" method="post" action="/assessments/{{ assessment.id }}/confirm">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+  <div class="confirm-bar__copy"><strong>Choose the configured AI model for this {% if review_state %}revised {% endif %}Context Pack.</strong><small>The selected provider receives only these approved units plus the AQA workflow instructions—not the full repositories. Any later context expansion returns to this approval gate.</small></div>
+  {% if approval_profile_views %}
+  <div class="approval-profile-picker">
+    <label for="approval-profile-select"><span>Configured AI model</span>
+      <select id="approval-profile-select" name="ai_profile_id" required>
+        {% for view in approval_profile_views %}
+        {% set profile = view.profile %}
+        <option value="{{ profile.id }}" data-provider="{{ view.provider_label }}" data-model="{{ profile.model }}" data-credential="{{ view.credential_label }}"{% if profile.id == selected_ai_profile_id %} selected{% endif %}>{{ profile.label }} — {{ view.provider_label }} / {{ profile.model }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <div class="approval-profile-meta" aria-live="polite"><span class="status status-ready">Configured</span><span data-approval-credential></span><a href="/profile#profile-content">Add or edit in Profile <span aria-hidden="true">→</span></a></div>
+  </div>
+  <button class="button primary" type="submit">{% if review_state %}Approve additional context{% else %}Approve and create review{% endif %} <span>→</span></button>
+  {% else %}
+  <section class="approval-profile-empty" aria-labelledby="approval-profile-empty-title"><div><strong id="approval-profile-empty-title">No configured AI model is ready.</strong><small>Add a provider, model ID and API key in Profile, then return to this approval gate.</small></div><a class="button primary" href="/profile#profile-content">Configure an AI model <span>→</span></a></section>
+  {% endif %}
+</form>
+</div>
+{% endblock %}

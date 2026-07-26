@@ -1,0 +1,5 @@
+__version__ = "1.2.0"
+METHOD_VERSION = "aqa-ai-workflows-pe-v1"
+CONTEXT_SCHEMA_VERSION = "context-pack-v1"
+REPORT_SCHEMA_VERSION = "canonical-review-v1"
+RISK_POLICY_VERSION = "risk-policy-v1"

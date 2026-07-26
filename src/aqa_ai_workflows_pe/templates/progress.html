@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Review in progress · AQA AI Workflows Public Edition{% endblock %}
+{% block shell_class %}full-hero-shell{% endblock %}
+{% block content %}
+<section class="solution-hero progress-card" data-progress-url="/api/assessments/{{ assessment.id }}" aria-labelledby="progress-message">
+  <div class="solution-hero__inner">
+    <div class="solution-hero__big-title" aria-hidden="true"><span>Review in motion.</span></div>
+    <div class="solution-hero__content">
+      <a class="solution-hero__scroll" href="#review-phases" aria-label="Scroll to review phases"><span aria-hidden="true">↓</span></a>
+      <div class="solution-hero__title-wrap">
+        <div class="solution-hero__copy">
+          <p class="eyebrow">Local assessment · {{ assessment.status.value }}</p>
+          <h1 id="progress-message">{{ assessment.message }}</h1>
+          <p id="progress-detail">Keep this window open. Repository code is inspected as Git objects and is never executed.</p>
+          <div class="progress-track" role="progressbar" aria-label="Assessment progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ assessment.progress }}"><span id="progress-bar"></span></div>
+          <div class="progress-meta"><span id="progress-percent">{{ assessment.progress }}%</span><span id="progress-status">{{ assessment.status.value }}</span></div>
+          <div id="progress-error" class="alert alert-error" role="alert" hidden></div>
+          <noscript><p>JavaScript is disabled. Refresh this page after a minute to continue.</p></noscript>
+        </div>
+        <div class="solution-hero__actions progress-hero-actions">
+          <div class="progress-hero-status"><div class="pulse-mark" aria-hidden="true"><span></span></div><strong>Running locally</strong><small>Keep this tab open</small></div>
+          <a class="hero-action hero-action--light" href="/history"><span aria-hidden="true">←</span> Local history</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<div class="page-content">
+<section class="process-rail" id="review-phases" aria-label="Review phases">
+  <div><span>01</span><strong>Acquire</strong><small>PR + exact commits</small></div>
+  <div><span>02</span><strong>Context</strong><small>Bounded local evidence</small></div>
+  <div><span>03</span><strong>Review</strong><small>Your chosen model</small></div>
+  <div><span>04</span><strong>Validate</strong><small>Citations + risk policy</small></div>
+</section>
+</div>
+{% endblock %}

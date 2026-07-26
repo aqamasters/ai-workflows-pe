@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Local history · AQA AI Workflows Public Edition{% endblock %}
+{% block shell_class %}full-hero-shell{% endblock %}
+{% block content %}
+<section class="solution-hero" aria-labelledby="history-hero-title">
+  <div class="solution-hero__inner">
+    <div class="solution-hero__big-title" aria-hidden="true"><span>Local reviews.</span></div>
+    <div class="solution-hero__content">
+      <a class="solution-hero__scroll" href="#history-content" aria-label="Scroll to local review history"><span aria-hidden="true">↓</span></a>
+      <div class="solution-hero__title-wrap">
+        <div class="solution-hero__copy"><p class="eyebrow">Only on this machine</p><h1 id="history-hero-title">Local review history</h1><p>Reopen a result or delete its derived reports. Repository caches remain reusable and contain no working checkout.</p></div>
+        <div class="solution-hero__actions"><a class="hero-action hero-action--dark" href="/"><span aria-hidden="true">→</span> New review</a><a class="hero-action hero-action--light" href="#history-content"><span aria-hidden="true">↓</span> Browse reviews</a></div>
+      </div>
+    </div>
+  </div>
+</section>
+<section class="history-section" id="history-content" aria-labelledby="history-list-title">
+  <div class="history-content">
+    <div class="history-section-heading">
+      <div><p class="mono-label">Saved locally</p><h2 id="history-list-title">Reviews on this machine</h2><p>Each record keeps its status, selected model and generated reports together.</p></div>
+      <div class="history-count"><strong>{{ assessments | length }}</strong><span>{% if assessments | length == 1 %}review{% else %}reviews{% endif %}</span></div>
+    </div>
+    {% if assessments %}
+    <div class="history-page-list">
+      {% for item in assessments %}
+      <article class="history-record">
+        <a class="history-record__primary" href="{% if item.status.value == 'complete' %}/assessments/{{ item.id }}{% else %}/assessments/{{ item.id }}/progress{% endif %}">
+          <span class="history-record__index" aria-hidden="true">{{ "%02d" | format(loop.index) }}</span>
+          <span class="history-record__copy"><small>{{ item.updated_at.strftime('%Y-%m-%d · %H:%M') }}</small><strong>{{ item.request.pull_request_url }}</strong><span>Open review <i aria-hidden="true">↗</i></span></span>
+        </a>
+        <div class="history-record__model"><small>AI model</small><strong>{{ item.request.provider.provider.value }}</strong><span>{{ item.request.provider.model }}</span></div>
+        <div class="history-record__state">
+          <span class="status status-{{ item.status.value }}">{{ item.status.value }}</span>
+          <form method="post" action="/assessments/{{ item.id }}/delete"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="text-button danger" type="submit">Delete</button></form>
+        </div>
+      </article>
+      {% endfor %}
+    </div>
+    {% else %}
+    <section class="empty-state"><h2>No local reviews yet.</h2><p>Start with an open GitHub pull request.</p><a class="button primary" href="/">Create first review</a></section>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

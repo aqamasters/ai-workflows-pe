@@ -1,0 +1,98 @@
+[build-system]
+requires = ["hatchling==1.28.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "aqa-ai-workflows-pe"
+dynamic = ["version"]
+description = "AQA AI Workflows Public Edition: local, evidence-backed Product and QA analysis for GitHub pull requests."
+readme = "README.md"
+requires-python = ">=3.12,<3.15"
+license = { file = "LICENSE" }
+authors = [{ name = "AQA Masters", email = "hello@aqamasters.com" }]
+keywords = ["quality-assurance", "pull-request", "testing", "ai", "change-impact"]
+classifiers = [
+  "Development Status :: 5 - Production/Stable",
+  "License :: OSI Approved :: Apache Software License",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+]
+dependencies = [
+  "fastapi>=0.139.2,<1",
+  "starlette>=1.3.1,<2",
+  "uvicorn>=0.51,<1",
+  "jinja2>=3.1,<4",
+  "pydantic>=2.13,<3",
+  "httpx>=0.28,<1",
+  "platformdirs>=4.10,<5",
+  "keyring>=25.7,<26",
+  "python-multipart>=0.0.32,<1",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.3,<10",
+  "pytest-asyncio>=0.26,<2",
+  "respx>=0.22,<1",
+  "ruff>=0.11,<1",
+]
+
+[project.scripts]
+aqa-ai-workflows = "aqa_ai_workflows_pe.cli:main"
+
+[project.urls]
+Homepage = "https://aqamasters.com/solutions/ai-qa-enablement"
+Repository = "https://github.com/aqamasters/ai-workflows-pe"
+Documentation = "https://github.com/aqamasters/ai-workflows-pe/tree/main/docs"
+Issues = "https://github.com/aqamasters/ai-workflows-pe/issues"
+Releases = "https://github.com/aqamasters/ai-workflows-pe/releases"
+
+[tool.hatch.build]
+exclude = [
+  "/.ai/**",
+  "/.idea/**",
+  "/dist/**",
+  "/docs/images/**",
+  "/outputs/**",
+  "**/node_modules/**",
+  "**/__pycache__/**",
+  "*.pyc",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/aqa_ai_workflows_pe"]
+artifacts = [
+  "src/aqa_ai_workflows_pe/templates/**",
+  "src/aqa_ai_workflows_pe/static/**",
+  "src/aqa_ai_workflows_pe/resources/**",
+]
+
+[tool.hatch.version]
+path = "src/aqa_ai_workflows_pe/version.py"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+addopts = "-ra --strict-markers"
+markers = [
+  "network: requires external network access",
+  "slow: takes more than a few seconds",
+]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+exclude = [".venv", "build", "dist"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "S", "RUF"]
+ignore = ["E501", "RUF001", "S101", "S603", "S607"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S105", "S106"]
+
+[tool.ruff.format]
+quote-style = "double"

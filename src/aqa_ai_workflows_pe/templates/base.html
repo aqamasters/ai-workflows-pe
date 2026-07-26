@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <meta name="theme-color" content="#f3f2f0">
+  <title>{% block title %}AQA AI Workflows Public Edition{% endblock %}</title>
+  <link rel="stylesheet" href="/static/app.css">
+  <script src="/static/app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="app-header">
+    <div class="topbar">
+      <a class="brand" href="/" aria-label="AQA AI Workflows Public Edition home">
+        <img src="/static/aqa-masters-logo.png" alt="AQA Masters">
+        <span class="brand-product"><strong>AI Workflows</strong><small>Public Edition</small></span>
+      </a>
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="primary-navigation">
+        <span class="sr-only">Toggle navigation</span><i></i><i></i>
+      </button>
+      <nav id="primary-navigation" aria-label="Primary navigation">
+        <a href="/"{% if request.url.path == '/' %} aria-current="page"{% endif %}>New workflow</a>
+        <a href="/history"{% if request.url.path == '/history' %} aria-current="page"{% endif %}>Local history</a>
+        <a href="/profile"{% if request.url.path.startswith('/profile') %} aria-current="page"{% endif %}>Profile</a>
+        <a href="/about"{% if request.url.path == '/about' %} aria-current="page"{% endif %}>About</a>
+        <a class="managed-delivery-link" href="https://aqamasters.com/solutions/ai-qa-enablement" target="_blank" rel="noreferrer">Get Managed Delivery <span aria-hidden="true">↗</span></a>
+      </nav>
+    </div>
+  </header>
+  <main id="main" class="shell {% block shell_class %}{% endblock %}">
+    {% block alerts %}{% if error %}<div class="alert alert-error" role="alert"><span class="alert-icon" aria-hidden="true">!</span><div><strong>Couldn’t continue.</strong><p>{{ error }}</p></div></div>{% endif %}{% endblock %}
+    {% block content %}{% endblock %}
+  </main>
+  <footer class="footer-wrap" aria-labelledby="site-footer-title">
+    <h2 class="sr-only" id="site-footer-title">AQA AI Workflows Public Edition footer</h2>
+    <div class="footer">
+      <div class="footer-brand-row">
+        <div class="footer-brand">
+          <img src="/static/aqa-masters-logo.png" alt="AQA Masters">
+          <p>Repository-aware QA thinking you can inspect, run and own.</p>
+        </div>
+        <nav class="footer-utility" aria-label="Footer navigation">
+          <a href="/">New workflow <span aria-hidden="true">↗</span></a>
+          <a href="/history">Local history <span aria-hidden="true">↗</span></a>
+          <a href="/profile">AI profile <span aria-hidden="true">↗</span></a>
+          <a href="/about">About <span aria-hidden="true">↗</span></a>
+        </nav>
+      </div>
+      <div class="footer-principles" aria-label="Application guarantees">
+        <div><span>01</span><strong>Runs locally</strong><small>Your review workspace stays on this machine.</small></div>
+        <div><span>02</span><strong>You choose the model</strong><small>Only AI models configured in your Profile can run.</small></div>
+        <div><span>03</span><strong>Approval before sending</strong><small>Inspect the evidence pack before provider transmission.</small></div>
+        <div><span>04</span><strong>No telemetry</strong><small>No AQA account and no product analytics.</small></div>
+      </div>
+      <div class="footer-bottom">
+        <p>AQA AI Workflows Public Edition · v{{ version }}</p>
+        <div class="footer-meta"><span>Local-first</span><span>Evidence-backed</span><span>Human-approved</span></div>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>

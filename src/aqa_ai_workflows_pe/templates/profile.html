@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+{% block title %}Profile · AQA AI Workflows Public Edition{% endblock %}
+{% block shell_class %}full-hero-shell{% endblock %}
+{% block content %}
+<section class="solution-hero" aria-labelledby="profile-hero-title">
+  <div class="solution-hero__inner">
+    <div class="solution-hero__big-title" aria-hidden="true"><span>Your AI.</span></div>
+    <div class="solution-hero__content">
+      <a class="solution-hero__scroll" href="#profile-content" aria-label="Scroll to configured AI models"><span aria-hidden="true">↓</span></a>
+      <div class="solution-hero__title-wrap">
+        <div class="solution-hero__copy"><p class="eyebrow">Your local workspace</p><h1 id="profile-hero-title">Configure the AI models you trust.</h1><p>Your model settings stay on this machine. API keys are stored by the operating-system credential manager and are never written to the AQA database, reports or logs.</p></div>
+        <div class="solution-hero__actions"><a class="hero-action hero-action--dark" href="/"><span aria-hidden="true">→</span> New review</a><a class="hero-action hero-action--light" href="#configured-models"><span aria-hidden="true">↓</span> Configured models</a></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="profile-section" id="profile-content" aria-labelledby="profile-workspace-title">
+<div class="profile-content">
+{% if notice %}<div class="alert alert-success profile-notice" role="status"><span class="alert-icon" aria-hidden="true">✓</span><div><strong>Profile updated.</strong><p>{{ notice }}</p></div></div>{% endif %}
+
+<div class="profile-section-heading">
+  <div><p class="mono-label">Local AI configuration</p><h2 id="profile-workspace-title">Your AI workspace</h2><p>Configure the models available for AI workflows and choose which one new assessments use by default.</p></div>
+  <div class="profile-count"><strong>{{ profile_views|length }}</strong><span>configured model{% if profile_views|length != 1 %}s{% endif %}</span></div>
+</div>
+
+<section class="profile-identity" aria-label="Local user profile">
+  <span class="profile-avatar" aria-hidden="true">Y</span>
+  <div><p class="mono-label">LOCAL USER PROFILE</p><h3>This operating-system account</h3><p>Configurations are available only to this user. Provider credentials stay in the operating-system credential manager.</p></div>
+  <span class="local-profile-badge"><i aria-hidden="true"></i> Local-only</span>
+</section>
+
+<div class="profile-layout">
+  <section>
+    <div class="section-heading profile-models-heading" id="configured-models"><div><p class="mono-label">CONFIGURED MODELS</p><h2>Ready for AI workflows</h2><p>Every configured model remains selectable when you prepare a new assessment.</p></div></div>
+    {% if profile_views %}
+    <div class="profile-model-list">
+      {% for view in profile_views %}
+      {% set profile = view.profile %}
+      <article class="profile-model-card{% if profile.is_default %} is-default{% endif %}">
+        <header class="profile-model-head">
+          <span class="provider-monogram" aria-hidden="true">{{ view.provider_label[:1] }}</span>
+          <div><div class="profile-model-status">{% if view.configured %}<span class="status status-ready">Configured</span>{% else %}<span class="status status-failed">Needs API key</span>{% endif %}{% if profile.is_default %}<span class="status status-default">Default</span>{% endif %}</div><h3>{{ profile.label }}</h3><p>{{ view.provider_label }} · <code>{{ profile.model }}</code></p></div>
+        </header>
+
+        <dl class="profile-model-facts">
+          <div><dt>Provider</dt><dd>{{ view.provider_label }}</dd></div>
+          <div><dt>Model ID</dt><dd><code>{{ profile.model }}</code></dd></div>
+          <div><dt>Destination</dt><dd>{{ profile.destination_class }}{% if profile.base_url %} · {{ profile.base_url }}{% endif %}</dd></div>
+          <div><dt>Credential</dt><dd>{{ view.credential_label }}</dd></div>
+        </dl>
+
+        <details class="profile-editor">
+          <summary><span><strong>Edit configuration</strong><small>Update its name, model, endpoint or API key.</small></span><span class="summary-icon" aria-hidden="true">+</span></summary>
+          <form method="post" action="/profile/ai-models/{{ profile.id }}" autocomplete="off" data-ai-profile-form>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <div class="two-col">
+              <label class="field"><span>Configuration name</span><input name="label" required maxlength="80" value="{{ profile.label }}"></label>
+              <label class="field"><span>Provider</span><select name="provider" data-profile-provider>
+                <option value="openai"{% if profile.provider.value == 'openai' %} selected{% endif %}>OpenAI</option>
+                <option value="anthropic"{% if profile.provider.value == 'anthropic' %} selected{% endif %}>Anthropic</option>
+                <option value="google"{% if profile.provider.value == 'google' %} selected{% endif %}>Google Gemini</option>
+                <option value="compatible"{% if profile.provider.value == 'compatible' %} selected{% endif %}>Local / OpenAI-compatible</option>
+                <option value="fake"{% if profile.provider.value == 'fake' %} selected{% endif %}>Offline demo</option>
+              </select></label>
+              <label class="field"><span>Model ID</span><input name="model" required maxlength="200" value="{{ profile.model }}" data-profile-model></label>
+              <label class="field compatible-only"{% if profile.provider.value != 'compatible' %} hidden{% endif %}><span>Compatible API base URL</span><input type="url" name="base_url" maxlength="500" value="{{ profile.base_url }}" placeholder="http://127.0.0.1:11434/v1"><small>Loopback HTTP or a custom HTTPS endpoint only.</small></label>
+              <label class="field credential-only wide"{% if profile.provider.value == 'fake' %} hidden{% endif %}><span>{% if view.has_key %}Replace API key <em>optional</em>{% else %}API key{% if profile.provider.value == 'compatible' %} <em>optional</em>{% endif %}{% endif %}</span><input type="password" name="api_key" autocomplete="new-password" spellcheck="false" autocapitalize="none" placeholder="{% if view.has_key %}Leave blank to keep the current key{% else %}Stored in the OS credential manager{% endif %}"><small>The current key is never displayed. Entering a value replaces it.</small></label>
+            </div>
+            <button class="button primary" type="submit">Save changes</button>
+          </form>
+        </details>
+
+        <div class="profile-actions">
+          {% if not profile.is_default and view.configured %}<form method="post" action="/profile/ai-models/{{ profile.id }}/default"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="text-button" type="submit">Make default</button></form>{% endif %}
+          {% if view.has_key %}<form method="post" action="/profile/ai-models/{{ profile.id }}/credential/delete"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="text-button" type="submit">Remove API key</button></form>{% endif %}
+          <form method="post" action="/profile/ai-models/{{ profile.id }}/delete"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="text-button danger" type="submit">Delete configuration</button></form>
+        </div>
+      </article>
+      {% endfor %}
+    </div>
+    {% else %}
+    <section class="empty-state profile-empty"><span class="empty-mark" aria-hidden="true">+</span><h2>No AI models configured.</h2><p>Create the first configuration using the form on this page. It will become your default automatically.</p></section>
+    {% endif %}
+  </section>
+
+  <aside class="profile-create-card">
+    <p class="mono-label">ADD AN AI MODEL</p>
+    <h2>New configuration</h2>
+    <p>Use the exact model ID enabled for your provider account. You can edit or delete this configuration later.</p>
+    <form method="post" action="/profile/ai-models" autocomplete="off" data-ai-profile-form>
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <div class="fields">
+        <label class="field"><span>Configuration name</span><input name="label" required maxlength="80" value="{{ profile_form.label or '' }}" placeholder="Primary review model"></label>
+        <label class="field"><span>Provider</span><select name="provider" data-profile-provider>
+          <option value="openai"{% if not profile_form.provider or profile_form.provider == 'openai' %} selected{% endif %}>OpenAI</option>
+          <option value="anthropic"{% if profile_form.provider == 'anthropic' %} selected{% endif %}>Anthropic</option>
+          <option value="google"{% if profile_form.provider == 'google' %} selected{% endif %}>Google Gemini</option>
+          <option value="compatible"{% if profile_form.provider == 'compatible' %} selected{% endif %}>Local / OpenAI-compatible</option>
+          <option value="fake"{% if profile_form.provider == 'fake' %} selected{% endif %}>Offline demo — no AI call</option>
+        </select></label>
+        <label class="field"><span>Model ID</span><input name="model" required maxlength="200" value="{{ profile_form.model or 'gpt-5.6-sol' }}" placeholder="Model ID" data-profile-model></label>
+        <label class="field compatible-only"{% if profile_form.provider != 'compatible' %} hidden{% endif %}><span>Compatible API base URL</span><input type="url" name="base_url" maxlength="500" value="{{ profile_form.base_url or '' }}" placeholder="http://127.0.0.1:11434/v1"><small>Loopback HTTP or a custom HTTPS endpoint only.</small></label>
+        <label class="field credential-only"{% if profile_form.provider == 'fake' %} hidden{% endif %}><span>API key <em data-key-optional>{% if profile_form.provider == 'compatible' %}optional{% endif %}</em></span><input type="password" name="api_key" autocomplete="new-password" spellcheck="false" autocapitalize="none" placeholder="Stored in the OS credential manager"><small>Submitted directly to this local app. It is never written to SQLite, reports or logs.</small></label>
+        <label class="check field"><input type="checkbox" name="is_default" value="1"><span>Use as the default for new reviews</span></label>
+      </div>
+      <button class="button primary profile-create-button" type="submit"><span class="button-arrow" aria-hidden="true">→</span> Save configuration</button>
+    </form>
+  </aside>
+</div>
+</div>
+</section>
+{% endblock %}

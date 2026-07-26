@@ -1,0 +1,210 @@
+{% extends "base.html" %}
+{% block title %}{{ assessment.result.intended_outcome }} · AQA AI Workflows Public Edition{% endblock %}
+{% block shell_class %}assessment-shell{% endblock %}
+{% block content %}
+{% set result = assessment.result %}
+<section class="hero-and-summary" aria-labelledby="assessment-hero-title">
+  <div class="hero-and-summary__inner">
+    <div class="hero-and-summary__big-title" aria-hidden="true"><span>Change assessment.</span></div>
+    <div class="hero-and-summary__content">
+      <a class="hero-and-summary__scroll" href="#assessment-sections" aria-label="Scroll to assessment sections"><span aria-hidden="true">↓</span></a>
+      <div class="hero-and-summary__title-wrap">
+        <div class="hero-and-summary__copy">
+          <div class="hero-and-summary__meta"><span>Evidence-backed review</span><span>{{ result.meta.provider.value }} · {{ result.meta.model }}</span>{% if result.meta.stale %}<span class="hero-warning">PR moved since analysis</span>{% endif %}</div>
+          <h1 id="assessment-hero-title"{% if result.intended_outcome|length > 110 %} class="hero-title--long"{% endif %}>{{ result.intended_outcome }}</h1>
+          <p class="hero-and-summary__intro">{{ result.change_summary }}</p>
+        </div>
+        <div class="hero-and-summary__actions" aria-label="Assessment actions">
+          <a class="hero-action hero-action--dark" href="/assessments/{{ assessment.id }}/downloads/qa-report.md"><span aria-hidden="true">→</span> Download QA report</a>
+          <a class="hero-action hero-action--light" href="#assessment-sections"><span aria-hidden="true">→</span> Explore assessment</a>
+        </div>
+      </div>
+    </div>
+    <div class="hero-and-summary__summary">
+      <div class="hero-and-summary__summary-heading">
+        <p class="hero-and-summary__summary-label">Assessment summary</p>
+        <p class="hero-and-summary__summary-note">Analysis direction only. Every material claim remains tied to the approved evidence pack.</p>
+      </div>
+      <dl aria-label="Assessment summary">
+        <div><dt>Highest risk</dt><dd>{% if result.risks %}{{ result.risks[0].score }} · {{ result.risks[0].band.value }}{% else %}None supported{% endif %}</dd></div>
+        <div><dt>Test direction</dt><dd>{{ result.scenarios|length }} prioritized scenario{% if result.scenarios|length != 1 %}s{% endif %}</dd></div>
+        <div><dt>Evidence</dt><dd>{{ result.evidence|length }} approved unit{% if result.evidence|length != 1 %}s{% endif %}</dd></div>
+        <div><dt>Commit range</dt><dd><code>{{ result.meta.base_sha[:8] }}</code> → <code>{{ result.meta.head_sha[:8] }}</code></dd></div>
+      </dl>
+    </div>
+  </div>
+</section>
+
+<div class="assessment-content">
+
+<div class="analysis-notice"><strong>Review boundary.</strong> {{ result.disclaimer }}</div>
+
+<nav class="tabs" id="assessment-sections" role="tablist" aria-label="Review sections">
+  <button class="tab active" id="tab-product" data-tab="product" type="button" role="tab" aria-selected="true" aria-controls="panel-product">Product brief</button>
+  <button class="tab" id="tab-qa" data-tab="qa" type="button" role="tab" aria-selected="false" aria-controls="panel-qa" tabindex="-1">QA testing</button>
+  <button class="tab" id="tab-services" data-tab="services" type="button" role="tab" aria-selected="false" aria-controls="panel-services" tabindex="-1">Service impact</button>
+  <button class="tab" id="tab-evidence" data-tab="evidence" type="button" role="tab" aria-selected="false" aria-controls="panel-evidence" tabindex="-1">Evidence</button>
+</nav>
+
+<section class="tab-panel active" id="panel-product" data-panel="product" role="tabpanel" aria-labelledby="tab-product" tabindex="0">
+  <div class="section-heading product-brief-intro">
+    <div><p class="mono-label">PRODUCT DIRECTION</p><h2>Read the outcome, then challenge the contract.</h2><p>Start with the likely product effect, confirm the journeys and rules it touches, then resolve the questions and highest-ranked risks.</p></div>
+    <span class="count-badge">{{ result.risks|length }} risk{% if result.risks|length != 1 %}s{% endif %}</span>
+  </div>
+
+  <dl class="product-brief-overview" aria-label="Product brief summary">
+    <div><dt>Affected journeys</dt><dd>{{ result.product_impact.affected_journeys|length }}</dd></div>
+    <div><dt>Business rules</dt><dd>{{ result.product_impact.business_rules|length }}</dd></div>
+    <div><dt>Open questions</dt><dd>{{ result.gaps_and_questions|length }}</dd></div>
+    <div><dt>Highest risk</dt><dd>{% if result.risks %}{{ result.risks[0].score }} · {{ result.risks[0].band.value }}{% else %}None supported{% endif %}</dd></div>
+  </dl>
+
+  <div class="product-brief-flow">
+    <section class="product-brief-section product-outcome" aria-labelledby="product-outcome-title">
+      <header class="product-brief-section-heading"><span class="product-brief-section-index">01</span><div><p class="mono-label">Likely outcome</p><h3 id="product-outcome-title">What this change enables</h3></div></header>
+      <div class="product-outcome__body"><p>{{ result.product_impact.outcome }}</p><p class="citations"><span>Evidence</span>{% for id in result.product_impact.evidence_ids %}<a href="#{{ id }}">{{ id }}</a>{% endfor %}</p></div>
+    </section>
+
+    <section class="product-brief-section" aria-labelledby="product-footprint-title">
+      <header class="product-brief-section-heading"><span class="product-brief-section-index">02</span><div><p class="mono-label">Change footprint</p><h3 id="product-footprint-title">Where product behavior may move</h3><p>Separate the customer or operator journeys from the rules the implementation must preserve.</p></div></header>
+      <div class="product-impact-grid">
+        <article class="product-impact-block"><header><p class="mono-label">Affected journeys</p><span>{{ result.product_impact.affected_journeys|length }}</span></header>{% if result.product_impact.affected_journeys %}<ol>{% for item in result.product_impact.affected_journeys %}<li><span aria-hidden="true">{{ "%02d" | format(loop.index) }}</span><p>{{ item }}</p></li>{% endfor %}</ol>{% else %}<p class="product-empty-note">No affected journey was supported by the approved evidence.</p>{% endif %}</article>
+        <article class="product-impact-block"><header><p class="mono-label">Business rules</p><span>{{ result.product_impact.business_rules|length }}</span></header>{% if result.product_impact.business_rules %}<ol>{% for item in result.product_impact.business_rules %}<li><span aria-hidden="true">{{ "%02d" | format(loop.index) }}</span><p>{{ item }}</p></li>{% endfor %}</ol>{% else %}<p class="product-empty-note">No additional business rule was supported by the approved evidence.</p>{% endif %}</article>
+      </div>
+    </section>
+
+    <section class="product-brief-section" aria-labelledby="product-decisions-title">
+      <header class="product-brief-section-heading"><span class="product-brief-section-index">03</span><div><p class="mono-label">Decisions to unblock</p><h3 id="product-decisions-title">Questions before release</h3><p>Resolve these uncertainties before treating the expected behavior as a release contract.</p></div></header>
+      {% if result.gaps_and_questions %}<ol class="product-question-list">{% for item in result.gaps_and_questions %}<li><span aria-hidden="true">{{ "%02d" | format(loop.index) }}</span><p>{{ item }}</p></li>{% endfor %}</ol>{% else %}<p class="product-empty-note">No unresolved product question was identified from the approved evidence.</p>{% endif %}
+    </section>
+
+    <section class="product-brief-section product-risk-section" aria-labelledby="product-risks-title">
+      <header class="product-brief-section-heading"><span class="product-brief-section-index">04</span><div><p class="mono-label">Risk hypotheses</p><h3 id="product-risks-title">What deserves attention first</h3><p>Scores rank investigation order. Open a hypothesis to inspect the factors behind its position.</p></div></header>
+      {% if result.risks %}
+      <div class="product-risk-list">
+        {% for risk in result.risks %}
+        <details class="product-risk-card"{% if loop.first %} open{% endif %}>
+          <summary>
+            <span class="product-risk-card__index" aria-hidden="true">{{ "%02d" | format(loop.index) }}</span>
+            <span class="product-risk-card__overview">
+              <span class="product-risk-card__meta"><span class="risk-pill risk-{{ risk.band.value }}">{{ risk.band.value }}</span><span>Score {{ risk.score }}</span><code>{{ risk.id }}</code></span>
+              <strong>{{ risk.title }}</strong>
+              <small>{{ risk.hypothesis }}</small>
+            </span>
+            <span class="summary-icon" aria-hidden="true">+</span>
+          </summary>
+          <div class="product-risk-card__details">
+            <dl class="product-risk-factors">
+              <div><dt>Impact</dt><dd>{{ risk.impact_reason }}</dd></div>
+              <div><dt>Likelihood</dt><dd>{{ risk.likelihood_reason }}</dd></div>
+              <div><dt>Regression reach</dt><dd>{{ risk.regression_reason }}</dd></div>
+              <div><dt>Detectability</dt><dd>{{ risk.detectability_reason }}</dd></div>
+            </dl>
+            <p class="citations"><span>Evidence</span>{% for id in risk.evidence_ids %}<a href="#{{ id }}">{{ id }}</a>{% endfor %}</p>
+          </div>
+        </details>
+        {% endfor %}
+      </div>
+      {% else %}<p class="product-empty-note">No risk hypothesis was supported by the approved evidence.</p>{% endif %}
+    </section>
+  </div>
+</section>
+
+<section class="tab-panel" id="panel-qa" data-panel="qa" role="tabpanel" aria-labelledby="tab-qa" tabindex="0" hidden>
+  <div class="section-heading qa-testing-heading"><div><p class="mono-label">PRIORITIZED TEST DESIGN</p><h2>Start with signal, not volume.</h2><p>Scenarios are design direction only and have not been executed. Open one to inspect its steps, expected signals and evidence.</p></div><span class="count-badge">{{ result.scenarios|length }} scenarios</span></div>
+  <div class="scenario-list qa-scenario-list">
+    {% for item in result.scenarios %}
+    <details class="qa-scenario-card"{% if loop.first %} open{% endif %}>
+      <summary>
+        <span class="qa-scenario-card__index" aria-hidden="true">{{ "%02d" | format(loop.index) }}</span>
+        <span class="qa-scenario-card__overview">
+          <span class="qa-scenario-card__meta"><span class="priority priority-{{ item.priority|lower }}">{{ item.priority }}</span><span>{{ item.test_layer }}</span><code>{{ item.id }}</code></span>
+          <strong>{{ item.title }}</strong>
+          <small>{{ item.objective }}</small>
+        </span>
+        <span class="summary-icon" aria-hidden="true">+</span>
+      </summary>
+      <div class="qa-scenario-card__details">
+        <div class="scenario-columns">
+          <section><header><span aria-hidden="true">01</span><h4>Steps</h4></header><ol>{% for step in item.steps %}<li>{{ step }}</li>{% endfor %}</ol></section>
+          <section><header><span aria-hidden="true">02</span><h4>Expected signals</h4></header><ul>{% for signal in item.expected_signals %}<li>{{ signal }}</li>{% endfor %}</ul></section>
+        </div>
+        <p class="citations"><span>Evidence</span>{% for id in item.evidence_ids %}<a href="#{{ id }}">{{ id }}</a>{% endfor %}</p>
+      </div>
+    </details>
+    {% endfor %}
+  </div>
+
+  {% if result.exploratory_charters %}
+  <section class="qa-charters" aria-labelledby="qa-charters-title">
+    <div class="section-heading qa-charters__heading"><div><p class="mono-label">EXPLORATORY CHARTERS</p><h2 id="qa-charters-title">Challenge the assumptions.</h2><p>Use these missions after the prioritized checks to probe behavior the evidence cannot settle on its own.</p></div><span class="count-badge">{{ result.exploratory_charters|length }} charters</span></div>
+    <div class="charter-grid qa-charter-grid">
+      {% for item in result.exploratory_charters %}
+      <article class="qa-charter-card">
+        <header><span aria-hidden="true">{{ "%02d" | format(loop.index) }}</span><div><p class="mono-label">Exploratory mission</p><h3>{{ item.title }}</h3></div></header>
+        <p class="qa-charter-card__mission">{{ item.mission }}</p>
+        <dl><div><dt>Focus areas</dt><dd><ul>{% for focus in item.focus_areas %}<li>{{ focus }}</li>{% endfor %}</ul></dd></div><div><dt>Stop when</dt><dd><ul>{% for condition in item.stop_conditions %}<li>{{ condition }}</li>{% endfor %}</ul></dd></div></dl>
+      </article>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+</section>
+
+<section class="tab-panel" id="panel-services" data-panel="services" role="tabpanel" aria-labelledby="tab-services" tabindex="0" hidden>
+  <div class="section-heading service-impact-heading">
+    <div><p class="mono-label">CROSS-REPOSITORY VIEW</p><h2>Possible downstream impact</h2><p>“Inferred” is deliberately weaker than an explicit contract match. Treat every item as a direction to verify, not a confirmed production effect.</p></div>
+    <span class="count-badge">{{ result.service_impacts|length }} service{% if result.service_impacts|length != 1 %}s{% endif %}</span>
+  </div>
+
+  <div class="service-impact-flow">
+    {% if result.service_impacts %}
+    <div class="service-list service-impact-list">
+      {% for item in result.service_impacts %}
+      <article class="service-impact-card">
+        <header class="service-impact-card__heading">
+          <span class="service-impact-card__index" aria-hidden="true">{{ "%02d" | format(loop.index) }}</span>
+          <div><span class="confidence confidence-{{ item.confidence }}">{{ item.confidence }}</span><h3>{{ item.service }}</h3><small>{{ item.relationship }}</small></div>
+        </header>
+        <div class="service-impact-card__body">
+          <p class="mono-label">Possible impact</p>
+          <p>{{ item.possible_impact }}</p>
+          <p class="citations"><span>Evidence</span>{% for id in item.evidence_ids %}<a href="#{{ id }}">{{ id }}</a>{% endfor %}</p>
+        </div>
+      </article>
+      {% endfor %}
+    </div>
+    {% else %}
+    <section class="empty-state"><h2>No related-service impact was supported by the selected evidence.</h2><p>Add a related repository in a new review when a contract or consumer matters.</p></section>
+    {% endif %}
+
+    <section class="service-limitations" aria-labelledby="service-limitations-title">
+      <header class="service-limitations__heading">
+        <span class="service-limitations__mark" aria-hidden="true">!</span>
+        <div><p class="mono-label">Assessment boundary</p><h2 id="service-limitations-title">Limits to keep visible</h2><p>Keep these constraints beside the impact hypotheses when planning follow-up work.</p></div>
+      </header>
+      {% if result.limitations %}
+      <ol class="service-limitations__list">
+        {% for item in result.limitations %}<li><span aria-hidden="true">{{ "%02d" | format(loop.index) }}</span><p>{{ item }}</p></li>{% endfor %}
+      </ol>
+      {% else %}
+      <p class="service-limitations__empty">No additional assessment limitation was reported.</p>
+      {% endif %}
+    </section>
+  </div>
+</section>
+
+<section class="tab-panel" id="panel-evidence" data-panel="evidence" role="tabpanel" aria-labelledby="tab-evidence" tabindex="0" hidden>
+  <div class="section-heading"><div><p class="mono-label">PROVENANCE</p><h2>Inspect every citation.</h2><p>This is the exact bounded evidence selected locally. Redactions are marked in content.</p></div></div>
+  <div class="evidence-list">{% for item in result.evidence %}<details class="evidence-card" id="{{ item.id }}"><summary><span><code>{{ item.id }}</code><strong>{{ item.path }}</strong><small>{{ item.repository_slug }}@{{ item.commit_sha[:12] }} · {{ item.reason }}</small></span><span>+</span></summary><pre><code>{{ item.content }}</code></pre></details>{% endfor %}</div>
+  <section class="card"><p class="mono-label">TRANSMISSION RECEIPT</p><h2>What left the machine</h2>{% for item in result.transmission %}<div class="transmission"><strong>Round {{ loop.index }} · {{ item.provider.value }} / {{ item.model }}</strong><span>{{ item.destination }}</span><span>{{ item.evidence_ids|length }} evidence units · {{ "{:,}".format(item.content_bytes) }} bytes · ~{{ "{:,}".format(item.estimated_tokens) }} tokens</span><small>{{ item.sent_at.isoformat() }}</small></div>{% endfor %}</section>
+</section>
+
+<section class="export-bar">
+  <div><strong>Take the review into your workflow.</strong><small>Exports contain the report and bounded evidence—not credentials or full repositories.</small></div>
+  <div class="export-links"><a href="/assessments/{{ assessment.id }}/downloads/product-report.md">Product .md</a><a href="/assessments/{{ assessment.id }}/downloads/qa-report.md">QA .md</a><a href="/assessments/{{ assessment.id }}/downloads/canonical-review.json">JSON</a><a href="/assessments/{{ assessment.id }}/downloads/review.html">HTML</a></div>
+</section>
+</div>
+{% set managed_cta_tone = "continuous" %}
+{% include "managed_cta.jinja" %}
+{% endblock %}

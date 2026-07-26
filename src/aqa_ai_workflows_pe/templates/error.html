@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Couldn’t continue · AQA AI Workflows Public Edition{% endblock %}
+{% block shell_class %}full-hero-shell{% endblock %}
+{% block alerts %}{% endblock %}
+{% block content %}
+<section class="solution-hero error-hero" aria-labelledby="error-hero-title">
+  <div class="solution-hero__inner">
+    <div class="solution-hero__big-title" aria-hidden="true"><span>Review unavailable.</span></div>
+    <div class="solution-hero__content">
+      <a class="solution-hero__scroll" href="/" aria-label="Return to the new review page"><span aria-hidden="true">←</span></a>
+      <div class="solution-hero__title-wrap">
+        <div class="solution-hero__copy"><p class="eyebrow">Local application</p><h1 id="error-hero-title">We couldn’t open that review.</h1><p>{{ error }}</p></div>
+        <div class="solution-hero__actions error-hero-actions"><div class="error-hero-mark" aria-hidden="true">!</div><a class="hero-action hero-action--dark" href="/"><span aria-hidden="true">←</span> Back to new review</a></div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
